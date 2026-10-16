@@ -1,0 +1,51 @@
+#region Namespaces
+using Microsoft.EntityFrameworkCore;
+using HealthCareApp.Models;
+#endregion
+
+namespace HealthCareApp.DbContexts
+{
+    #region HealthCareDbContext Class
+    public class HealthCareDbContext : DbContext
+    {
+        #region DbSets
+        public DbSet<Patient> Patients { get; set; }
+        public DbSet<Doctor> Doctors { get; set; }
+        public DbSet<Appointment> Appointments { get; set; }
+        #endregion
+
+        #region OnConfiguring
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlServer("Server=localhost;Database=HealthCareDb;User Id=yermux;Password=.Mode@0987@.;TrustServerCertificate=True;");
+        }
+        #endregion
+
+        #region OnModelCreating (Fluent API Configurations)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            #region Composite Primary Key for Appointment
+            modelBuilder.Entity<Appointment>()
+                .HasKey(a => new { a.PatientId, a.DoctorId });
+            #endregion
+
+            #region Relationships & Delete Behaviors
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.Patient)
+                .WithMany(p => p.Appointments)
+                .HasForeignKey(a => a.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.Doctor)
+                .WithMany(d => d.Appointments)
+                .HasForeignKey(a => a.DoctorId)
+                .OnDelete(DeleteBehavior.Restrict);
+            #endregion
+        }
+        #endregion
+    }
+    #endregion
+}
